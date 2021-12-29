@@ -11,6 +11,10 @@ class ViewController: UIViewController {
 
     //MARK: Properties
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet var editBtn: UIBarButtonItem!
+    
+    var doneButton:UIBarButtonItem?
+    
     var tasks = [Task]() {
         didSet {
             self.saveTasks()
@@ -20,7 +24,7 @@ class ViewController: UIViewController {
     //MARK: Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(tapDoneBtn))
         self.tableView.dataSource = self
         self.tableView.delegate = self
         
@@ -29,6 +33,14 @@ class ViewController: UIViewController {
     
     //MARK: IBAction
     @IBAction func tapEditBtn(_ sender: UIBarButtonItem) {
+        //데이터가 없을 경우 편집모드로 들어가지 않도록 gaurd
+        guard !self.tasks.isEmpty else { return }
+        
+        // editbutton을 눌렀을때 왼쪽 바 버튼은 doneButton 으로 변경
+        self.navigationItem.leftBarButtonItem = self.doneButton
+        
+        // tableview 는 editing으로 설정
+        self.tableView.setEditing(true, animated: true)
     }
     
     @IBAction func tapAddBtn(_ sender: UIBarButtonItem) {
@@ -80,6 +92,14 @@ class ViewController: UIViewController {
         }
     }
     
+    @objc func tapDoneBtn() {
+        //왼쪽 바 버튼 아이템 done을 클릭시 editbutton으로 변경
+        self.navigationItem.leftBarButtonItem = self.editBtn
+        
+        // 테이블뷰 editing 모드 빠져 나오기
+        self.tableView.setEditing(false, animated: false)
+    }
+    
     
 }
 //MARK: TableView DataSource
@@ -95,11 +115,14 @@ extension ViewController:UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         let task = tasks[indexPath.row]
         cell.textLabel?.text = task.title
+        
+        //데이터의 done의 값이 변경될때마다 셀 악세서리 타입 변경
         if task.done {
             cell.accessoryType = .checkmark
         }else {
             cell.accessoryType = .none
         }
+        
         return cell 
     }
 }
@@ -113,5 +136,29 @@ extension ViewController:UITableViewDelegate {
         task.done = !task.done
         self.tasks[indexPath.row] = task
         self.tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
+    //편집모드에서의 기능 추가 메서드
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        self.tasks.remove(at: indexPath.row)
+        tableView.deleteRows(at: [indexPath], with: .automatic)
+        
+        if self.tasks.isEmpty{
+            self.tapDoneBtn()
+        }
+    }
+    
+    // 셀 재정렬 메소드
+    func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    // 셀 재정렬 메소드
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        //앱이 재실행 되어도 재정렬한 체로 userDefaults에 저장될 수 있도록 tasks의 index 재설정
+        var tasks = self.tasks
+        let task = tasks[sourceIndexPath.row]
+        tasks.remove(at: sourceIndexPath.row)
+        tasks.insert(task, at: destinationIndexPath.row)
+        self.tasks = tasks
     }
 }
