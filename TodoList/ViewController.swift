@@ -9,19 +9,20 @@ import UIKit
 
 class ViewController: UIViewController {
 
-    //MARK: Properties
+    //MARK: - Properties
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet var editBtn: UIBarButtonItem!
     
     var doneButton:UIBarButtonItem?
     
     var tasks = [Task]() {
+        //tasks 배열이 set된 후 saveTask()함수 호출
         didSet {
             self.saveTasks()
         }
     }
     
-    //MARK: Life Cycle
+    //MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(tapDoneBtn))
@@ -31,7 +32,7 @@ class ViewController: UIViewController {
         self.loadTasks()
     }
     
-    //MARK: IBAction
+    //MARK: - IBAction
     @IBAction func tapEditBtn(_ sender: UIBarButtonItem) {
         //데이터가 없을 경우 편집모드로 들어가지 않도록 gaurd
         guard !self.tasks.isEmpty else { return }
@@ -45,8 +46,9 @@ class ViewController: UIViewController {
     
     @IBAction func tapAddBtn(_ sender: UIBarButtonItem) {
         
-        //Alert
+        //AlertController 생성한다.
         let alert = UIAlertController(title: "할 일 등록", message: nil, preferredStyle: .alert)
+        //AlertController에서 사용될 액션을 설정 한다.
         let registerButton = UIAlertAction(title: "등록", style: .default, handler: { [weak self] _ in
 //            debugPrint("\(alert.textFields?[0].text)")
             guard let title = alert.textFields?[0].text else { return }
@@ -55,6 +57,8 @@ class ViewController: UIViewController {
             self?.tableView.reloadData()
         })
         let cancleButton = UIAlertAction(title: "취소", style: .cancel, handler: nil)
+        
+        //설정된 얼럿 액션을 AlertController에 추가
         alert.addAction(registerButton)
         alert.addAction(cancleButton)
         alert.addTextField { textField in
@@ -63,7 +67,7 @@ class ViewController: UIViewController {
         self.present(alert, animated: true, completion: nil)
     }
     
-    //MARK: function
+    //MARK: - function
     func saveTasks(){
         let data = self.tasks.map {
             [
@@ -71,6 +75,7 @@ class ViewController: UIViewController {
                 "done":$0.done
             ]
         }
+        //UserDefaults 선언
         let userDefaults = UserDefaults.standard
         
         // userDefaults에 key 저장 set
@@ -78,13 +83,13 @@ class ViewController: UIViewController {
     }
     
     func loadTasks(){
-        
+        //UserDefaults 선언
         let userDefaults = UserDefaults.standard
         
-        //userDefaults에 저장된 데이터 불러오기 ojbect
+        //userDefaults에 저장된 데이터를 forKey에 value 불러오기 ojbect
         guard let data = userDefaults.object(forKey: "tasks") as? [[String:Any]] else { return }
         
-        //userDefaults에 저장된 데이터를 task 배열에 저장
+        //userDefaults에 저장된 데이터를 다시 task 배열에 저장
         self.tasks = data.compactMap{
             guard let title = $0["title"] as? String else { return nil }
             guard let done = $0["done"] as? Bool else { return nil }
@@ -102,7 +107,8 @@ class ViewController: UIViewController {
     
     
 }
-//MARK: TableView DataSource
+
+//MARK: - TableView DataSource
 extension ViewController:UITableViewDataSource {
     
     //각 세션에 표시할 행의 개수
@@ -127,7 +133,7 @@ extension ViewController:UITableViewDataSource {
     }
 }
 
-//MARK: TableView Delegate
+//MARK: - TableView Delegate
 extension ViewController:UITableViewDelegate {
     
     //어떤 cell을 선택했는지
